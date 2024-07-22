@@ -3,20 +3,20 @@ import { useSelector } from "react-redux";
 //creating thunk
 export const updateChat=createAsyncThunk('chat/updateChat',({chatId,user},{getState})=>{
     const currentUser= getState().user.currentUser
-    console.log("currentuser in chatslice",currentUser)
+    // console.log("currentuser in chatslice",currentUser)
     // Check if current user is blocked
     if (user.blocked.includes(currentUser.id)) {
-        console.log("chatId in ChatSlice",chatId)
+        // console.log("chatId in ChatSlice",chatId)
         return { chatId:chatId, user:null, currentUser, isCurrentUserBlocked: true, isReceiverBlocked: false };
       }
       // Check if receiver is blocked
     else  if (currentUser.blocked.includes(user.id)) {
-        console.log("chatId in ChatSlice",chatId)
+        // console.log("chatId in ChatSlice",chatId)
         return { chatId:chatId, user, currentUser, isCurrentUserBlocked: false, isReceiverBlocked: true };
       }
       // Neither is blocked
     else 
-    console.log("chatId in ChatSlice",chatId)
+    // console.log("chatId in ChatSlice",chatId)
     return { chatId:chatId, user, currentUser, isCurrentUserBlocked: false, isReceiverBlocked: false };
 
 
@@ -34,6 +34,12 @@ const ChatSlice= createSlice({
     reducers:{
         changeBlock:(state,action)=>{
             state.isReceiverBlocked= !state.isReceiverBlocked
+        },
+        updateChatList: (state, action) => {
+            state.chats = state?.chats?.filter(chat => chat.chatId !== action.payload);
+        },
+        setChatId:(state,action)=>{
+            state.chatId=action.payload
         }
        
     },
@@ -51,4 +57,4 @@ const ChatSlice= createSlice({
 
 })
 export default ChatSlice.reducer
-export const {changeBlock} = ChatSlice.actions
+export const {changeBlock,updateChatList,setChatId} = ChatSlice.actions

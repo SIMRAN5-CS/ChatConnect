@@ -3,19 +3,29 @@ import { toast } from "react-toastify"
 // import { auth } from "../lib/firebase"
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth"
 
-import { auth, db, storage } from "../lib/firebase"
+import { auth, db, storage, database } from "../lib/firebase"
 import { doc, setDoc } from "firebase/firestore"
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
+import { serverTimestamp } from "firebase/firestore"
+import { useSelector } from "react-redux"
 
 
 
 
-const Login = () => {
+const Login = (props) => {
+    console.log(props)
+    const { logged, setLogged } = props
+    const { currentUser } = useSelector((store) => {
+
+        return store.user
+
+    })
+    console.log(currentUser)
 
     const [avatar, setAvatar] = useState({
         file: null,
         url: ""
-       
+
     })
     const [loading, setLoading] = useState(false);
     const handleAvatar = (e) => {
@@ -27,7 +37,7 @@ const Login = () => {
                 url: URL.createObjectURL(e.target.files[0])
             })
         }
-        
+
 
     }
 
@@ -40,8 +50,16 @@ const Login = () => {
         setLoading(true)
 
         try {
-            await signInWithEmailAndPassword(auth, email, password)
+            const response = await signInWithEmailAndPassword(auth, email, password)
             toast.success("loggedin succesfully")
+            setLogged(true)
+            const userStatusDocRef = doc(db, 'status', response.user.uid);
+
+            // Update status to online and set last seen timestamp
+            await setDoc(userStatusDocRef, {
+                online: true,
+                lastSeen: serverTimestamp()
+            }, { merge: true });
 
         }
         catch (err) {
@@ -51,6 +69,7 @@ const Login = () => {
         finally {
             setLoading(false)
         }
+
 
     }
 
@@ -69,16 +88,27 @@ const Login = () => {
             //authentication and create user with email and paswrd
             const response = await createUserWithEmailAndPassword(auth, email, password)
             // console.log(response)
-            toast.success("acct created")
-             //put img in firestore
-             if (avatar.file) {
+            // Reference to the user's status document
+            const userStatusDocRef = doc(db, 'status', response.user.uid);
+
+            // Update status to online and set last seen timestamp
+            await setDoc(userStatusDocRef, {
+                online: true,
+                lastSeen: serverTimestamp()
+            }, { merge: true });
+
+
+            toast.success("acct created,please login to continue")
+
+            //put img in firestore
+            if (avatar.file) {
                 try {
                     const imgRef = ref(storage, `images/${new Date().getTime()}_${avatar.file.name}`);
                     const metadata = {
                         contentType: avatar.file.type
                     };
                     // console.log("Uploading file:", avatar.file);
-                    await uploadBytes(imgRef, avatar.file,metadata);
+                    await uploadBytes(imgRef, avatar.file, metadata);
                     downloadURL = await getDownloadURL(imgRef);
                     // console.log("Download URL:", downloadURL);
                     toast.success("File uploaded successfully");
@@ -95,17 +125,33 @@ const Login = () => {
                 email: email,
                 blocked: [],
                 id: response.user.uid
-            
+
             });
             // console.log("users created")
             await setDoc(doc(db, "userChats", response.user.uid), {
                 id: response.user.uid,
-                chats:[]
+                chats: []
             });
         }
         catch (err) {
-            console.log("some error occured",err)
-            toast.error(err.mssg)
+            const getFirebaseErrorMessage = (errorCode) => {
+                switch (errorCode) {
+                    case 'auth/weak-password':
+                        return 'Password should be at least 6 characters.';
+                    case 'auth/email-already-in-use':
+                        return 'Email already in use,Plase Login.';
+                    case 'auth/invalid-email':
+                        return 'Invalid email address.';
+                    case 'auth/user-not-found':
+                        return 'User not found.';
+                    case 'auth/wrong-password':
+                        return 'Wrong password.';
+                    default:
+                        return 'An unknown error occurred.';
+                }
+            };
+            console.log("some error occured", err)
+            toast.error(getFirebaseErrorMessage(err.code))
         }
         finally {
             setLoading(false)
@@ -130,7 +176,7 @@ const Login = () => {
                     {/* IMP */}
                     {/* {console.log(avatar.url || "avatar.png")} */}
                     <label className="underline cursor-pointer w-full flex items-center justify-between" htmlFor="file1">Upload an IMage
-                        <img className="w-[50px] h-[50px] rounded-full object-cover opacity-[0.6]" src={avatar.url || "avatar.png"}  alt=""></img>
+                        <img className="w-[50px] h-[50px] rounded-full object-cover opacity-[0.6]" src={avatar.url || "avatar.png"} alt=""></img>
                     </label>
                     <input type="file" id="file1" multiple className="hidden" onChange={handleAvatar}></input>
 

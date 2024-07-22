@@ -1,11 +1,14 @@
 import {  arrayUnion, collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore"
 import { db } from "../lib/firebase"
 import { useState } from "react"
-import { useSelector } from "react-redux"
-const AddUser = () => {
+import { useDispatch, useSelector } from "react-redux"
+import { FaTimes } from 'react-icons/fa';
+
+const AddUser = ({setAddMode}) => {
     const {currentUser}= useSelector((store)=>{
             return  store.user
     })
+   
    const [user, setUser] = useState(null)
    const handleSearch = async (e) => {
       e.preventDefault()
@@ -18,8 +21,8 @@ const AddUser = () => {
          const q = query(userRef, where("name", "==", username));
          const querySnapshot = await getDocs(q)
          if (!querySnapshot.empty) {
-            setUser(querySnapshot.docs[0].data())
-            console.log("user in adduser",user)
+            setUser(querySnapshot.docs[0].data()) 
+            
          }
          else{
             console.log('no data to show')
@@ -29,6 +32,7 @@ const AddUser = () => {
       }
 
    }
+   console.log("user in adduser",user)
     const handleAdd=async()=>{
 
       const chatRef= collection(db,"chats")
@@ -40,6 +44,7 @@ const AddUser = () => {
       await setDoc(newChatRef, {
          createdAt: serverTimestamp(),
          messages: [],
+      
       });
 
       // console.log("user.id",user.id)
@@ -54,7 +59,9 @@ const AddUser = () => {
             chatId:newChatRef.id,
             receiverId:currentUser.id,
             lastMessage:"",
-            updatedAt:Date.now()
+            updatedAt:Date.now(),
+            isSeen:false
+            
          })
       })
      
@@ -63,7 +70,8 @@ const AddUser = () => {
             chatId:newChatRef.id,
             receiverId:user.id,
             lastMessage:"",
-            updatedAt:Date.now()
+            updatedAt:Date.now(),
+          
          })
       })
 
@@ -72,13 +80,22 @@ const AddUser = () => {
     console.log(err)
       }
     }
-   return (<div className="adduser absolute top-0 left-0 bottom-0 right-0 p-7 bg-blue-950 opacity-95 rounded-lg  m-auto w-max h-max">
+    const onClose=()=>{
+      setAddMode(prev=>!prev)
+    }
+   return (<div className="adduser absolute top-0 left-0 bottom-0 right-0 p-9 bg-blue-950 opacity-95 rounded-lg  m-auto w-max h-max  ">
+   <button 
+                onClick={onClose} 
+                className="absolute top-3 right-3 text-white bg-transparent border-none cursor-pointer p-1 hover:bg-slate-700"
+            >
+                <FaTimes size={15} />
+            </button>
       <form onSubmit={handleSearch} className="flex gap-5">
          <input className="p-5 rounded-lg border-none outline-none" type="text" name="username" placeholder="Username"></input>
          <button className="bg-slate-700 p-2 rounded-lg text-white cursor-pointer">Search</button>
       </form>
       {user && <div className="user mt-[50px] flex items-center justify-between">
-         <div className="detail flex gap-5 items-center">
+         <div className="detail flex gap-5 items-center " >
             <img className="w-[50px] h-[50px] rounded-full object-cover" src={user.avatar||"avatar.png"} alt=""></img>
             <span className="text-white">{user.name}</span>
          </div>
@@ -87,5 +104,8 @@ const AddUser = () => {
       </div>}
       
    </div>)
+}
+export function add(){
+   return 5
 }
 export default AddUser

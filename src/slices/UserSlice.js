@@ -2,12 +2,16 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "../lib/firebase";
 
-export const fetchUser = createAsyncThunk("user/fetchUser", async (uid,{rejectWithValue}) => {
+
+export const fetchUser = createAsyncThunk("user/fetchUser", async (uid,{rejectWithValue,getState}) => {
+   const {currentUser} = getState()
+   
     if (!uid) {
         return null
       }
-    
+      console.log(currentUser)
       try { 
+      
         const docRef = doc(db, "users", uid);
         const docSnap = await getDoc(docRef);
     
@@ -48,6 +52,9 @@ const UserSlice = createSlice({
             state.currentUser = null
             state.error = action.payload
         })
+    },
+    reducers:{
+       
     }
 
 })
