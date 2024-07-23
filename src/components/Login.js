@@ -7,7 +7,8 @@ import { auth, db, storage, database } from "../lib/firebase"
 import { doc, setDoc } from "firebase/firestore"
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage"
 import { serverTimestamp } from "firebase/firestore"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchUser } from "../slices/UserSlice"
 
 
 
@@ -20,6 +21,7 @@ const Login = (props) => {
         return store.user
 
     })
+     const dispatch=useDispatch()
     console.log(currentUser)
 
     const [avatar, setAvatar] = useState({
@@ -51,9 +53,14 @@ const Login = (props) => {
 
         try {
             const response = await signInWithEmailAndPassword(auth, email, password)
+            // console.log("repsonse.user.id",response.user.id)
             toast.success("loggedin succesfully")
-            setLogged(true)
+            // setLogged(true)
+            // console.log("logged",logged)
             const userStatusDocRef = doc(db, 'status', response.user.uid);
+            dispatch(fetchUser(response.user.uid))
+            // console.log("currentuser in login",currentUser)
+            
 
             // Update status to online and set last seen timestamp
             await setDoc(userStatusDocRef, {
@@ -150,7 +157,7 @@ const Login = (props) => {
                         return 'An unknown error occurred.';
                 }
             };
-            console.log("some error occured", err)
+            // console.log("some error occured", err)
             toast.error(getFirebaseErrorMessage(err.code))
         }
         finally {
