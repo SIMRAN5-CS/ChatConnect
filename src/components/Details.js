@@ -116,7 +116,7 @@ const Details = () => {
 
 
     return (
-        <div className=" flex-1 flex  flex-col overflow-y-scroll gap-2  ">
+        <div className="  hidden lg:flex flex-1   flex-col overflow-y-scroll gap-2  ">
             <div className="user px-7 py-4 flex flex-col items-center gap-2 border-b-2 border-b-gray-800">
                 <img className="h-[100px] w-[100px] object-cover rounded-full" src={user?.avatar || "avatar.png"} alt=""></img>
                 <h2 className="">{user?.name}</h2>
